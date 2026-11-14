@@ -118,7 +118,11 @@ endif
 GENERATED :=
 OBJECTS :=
 
+GENERATED += $(OBJDIR)/Entity.o
+GENERATED += $(OBJDIR)/PlayerController.o
 GENERATED += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/Entity.o
+OBJECTS += $(OBJDIR)/PlayerController.o
 OBJECTS += $(OBJDIR)/main.o
 
 # Rules
@@ -183,6 +187,12 @@ endif
 # File Rules
 # #############################################
 
+$(OBJDIR)/Entity.o: src/Entity/Entity.c
+	@echo "$(notdir $<)"
+	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/PlayerController.o: src/PlayerController/PlayerController.c
+	@echo "$(notdir $<)"
+	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/main.o: src/main.c
 	@echo "$(notdir $<)"
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
