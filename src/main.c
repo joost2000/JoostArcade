@@ -14,8 +14,10 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 
 #include "resource_dir.h" // utility header for SearchAndSetResourceDir
 
+#include "Assets/PlayerAssets.h"
 #include "Entity/Entity.h"
 #include "PlayerController/PlayerController.h"
+#include "SpriteSheetLoader/SpriteSheetLoader.h"
 
 int main()
 {
@@ -25,61 +27,41 @@ int main()
 	// Create the window and OpenGL context
 	InitWindow(720, 1080, "Hello Raylib");
 
-	// Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
-	SearchAndSetResourceDir("resources");
+	if (!SearchAndSetResourceDir("resources"))
+	{
+		TraceLog(LOG_ERROR, "Could not locate the resources directory");
+		CloseWindow();
+		return 1;
+	}
 
-	// Load a texture from the resources directory
-	Texture wabbit = LoadTexture("wabbit_alpha.png");
-	Texture walkingsprite = LoadTexture("16x32 Walk-Sheet.png");
+	if (!init_spritesheet_loader(1))
+	{
+		CloseWindow();
+		return 1;
+	}
 
 	Entity PlayerEntity = {
 		.EntityName = "myEntity",
-		.EntityOrigin = DRAW_FROM_CENTER,
 		.EntityPos = {.x = 400, .y = 200},
 		.EntityFriction = {.x = .988f, .y = .988f},
 		.EntityRotation = 0.0f,
 		.EntityScale = 5.0f,
-		.EntityTexture = wabbit,
+		.EntityOrigin = DRAW_FROM_CENTER,
 		.currentState = WALK_FORWARD,
 		.previousState = WALK_FORWARD,
 	};
 
-	SpriteSheetAnimation playerWalkAnim = {
-		.AnimationType = {
-			IDLE,
-			WALK_FORWARD,
-			WALK_FORWARD_STRAVE_RIGHT,
-			WALK_FORWARD_STRAVE_LEFT,
-			WALK_RIGHT,
-			WALK_BACKWARD,
-			WALK_BACKWARD_STRAVE_RIGHT,
-			WALK_BACKWARD_STRAVE_LEFT,
-			WALK_LEFT,
-		},
-		.AnimationTypeToRow = {
-			0,
-			4,
-			3,
-			3,
-			2,
-			0,
-			1,
-			1,
-			2,
-		},
-		.SheetColumns = 4,
-		.SheetRows = 5,
-		.targetRow = 4,
-		.SpriteDimensions = (Vector2){.x = 32, .y = 32},
-		.SpriteSheet = walkingsprite,
-		.MirrorFromRightToLeft = true,
-	};
+	if (!load_player_animations(&PlayerEntity))
+	{
+		release_entity(&PlayerEntity);
+		release_spritesheet_loader();
+		CloseWindow();
+		return 1;
+	}
 
 	PlayerController LocalController = {
 		.movementSpeed = 100,
 	};
-
-	add_animation(&PlayerEntity, &playerWalkAnim);
 
 	controller_assign_entity(&LocalController, &PlayerEntity);
 
@@ -118,9 +100,8 @@ int main()
 		EndDrawing();
 	}
 
-	// cleanup
-	// unload our texture so it can be cleaned up
-	UnloadTexture(wabbit);
+	release_entity(&PlayerEntity);
+	release_spritesheet_loader();
 
 	// destroy the window and cleanup the OpenGL context
 	CloseWindow();

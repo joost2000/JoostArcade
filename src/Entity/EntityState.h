@@ -1,0 +1,15 @@
+#pragma once
+
+typedef enum EntityState
+{
+    IDLE,
+    WALK_FORWARD,
+    WALK_FORWARD_STRAVE_RIGHT,
+    WALK_FORWARD_STRAVE_LEFT,
+    WALK_RIGHT,
+    WALK_BACKWARD,
+    WALK_BACKWARD_STRAVE_RIGHT,
+    WALK_BACKWARD_STRAVE_LEFT,
+    WALK_LEFT,
+    ENTITY_STATE_COUNT,
+} EntityState;

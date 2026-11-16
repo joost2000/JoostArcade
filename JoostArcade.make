@@ -119,10 +119,14 @@ GENERATED :=
 OBJECTS :=
 
 GENERATED += $(OBJDIR)/Entity.o
+GENERATED += $(OBJDIR)/PlayerAssets.o
 GENERATED += $(OBJDIR)/PlayerController.o
+GENERATED += $(OBJDIR)/SpriteSheetLoader.o
 GENERATED += $(OBJDIR)/main.o
 OBJECTS += $(OBJDIR)/Entity.o
+OBJECTS += $(OBJDIR)/PlayerAssets.o
 OBJECTS += $(OBJDIR)/PlayerController.o
+OBJECTS += $(OBJDIR)/SpriteSheetLoader.o
 OBJECTS += $(OBJDIR)/main.o
 
 # Rules
@@ -187,10 +191,16 @@ endif
 # File Rules
 # #############################################
 
+$(OBJDIR)/PlayerAssets.o: src/Assets/PlayerAssets.c
+	@echo "$(notdir $<)"
+	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/Entity.o: src/Entity/Entity.c
 	@echo "$(notdir $<)"
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/PlayerController.o: src/PlayerController/PlayerController.c
+	@echo "$(notdir $<)"
+	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/SpriteSheetLoader.o: src/SpriteSheetLoader/SpriteSheetLoader.c
 	@echo "$(notdir $<)"
 	$(SILENT) $(CC) $(ALL_CFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/main.o: src/main.c

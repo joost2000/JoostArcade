@@ -71,23 +71,42 @@ void move_entity(Entity *entity)
     entity->currentState = newState;
 }
 
-void add_animation(Entity *entity, SpriteSheetAnimation *newAnimationSheet)
+bool add_animation(Entity *entity, SpriteSheetAnimation newAnimationSheet)
 {
-    newAnimationSheet->frameRectangle = (Rectangle){
-        0,
-        newAnimationSheet->targetRow * newAnimationSheet->SpriteDimensions.y,
-        newAnimationSheet->SpriteDimensions.x,
-        newAnimationSheet->SpriteDimensions.y};
+    if (entity == NULL || newAnimationSheet.AnimationType < 0 || newAnimationSheet.AnimationType >= ENTITY_STATE_COUNT)
+    {
+        TraceLog(LOG_ERROR, "Cannot add animation: invalid entity or animation state");
+        return false;
+    }
 
-    entity->animation = newAnimationSheet;
+    if (entity->AssignedAnimations == NULL)
+    {
+        entity->AssignedAnimations = (SpriteSheetAnimation *)calloc(ENTITY_STATE_COUNT, sizeof(*entity->AssignedAnimations));
+        if (entity->AssignedAnimations == NULL)
+        {
+            TraceLog(LOG_ERROR, "Cannot allocate entity animation slots");
+            return false;
+        }
+    }
+
+    entity->AssignedAnimations[newAnimationSheet.AnimationType] = newAnimationSheet;
+    return true;
 }
 
 void animate_entity(Entity *entity, Vector2 drawingOffset)
 {
     int AnimationIndex = (int)entity->currentState;
-    SpriteSheetAnimation *currentAnimationData = entity->animation;
+    if (entity->AssignedAnimations == NULL || AnimationIndex < 0 || AnimationIndex >= ENTITY_STATE_COUNT)
+    {
+        return;
+    }
 
-    if (currentAnimationData == NULL)
+    SpriteSheetAnimation *currentAnimationData = &entity->AssignedAnimations[AnimationIndex];
+
+    if (currentAnimationData->spriteSheetInfo.SpriteSheet.id == 0 ||
+        currentAnimationData->spriteSheetInfo.SheetColumns <= 0 ||
+        currentAnimationData->spriteSheetInfo.SpriteDimensions.x <= 0 ||
+        currentAnimationData->spriteSheetInfo.SpriteDimensions.y <= 0)
     {
         return;
     }
@@ -96,7 +115,6 @@ void animate_entity(Entity *entity, Vector2 drawingOffset)
     {
         currentAnimationData->currentAnimationFrame = 0;
         currentAnimationData->totalFrametime = 0;
-        currentAnimationData->frameRectangle.y = currentAnimationData->AnimationTypeToRow[AnimationIndex] * currentAnimationData->SpriteDimensions.y;
     }
 
     if (entity->currentState != IDLE)
@@ -105,41 +123,32 @@ void animate_entity(Entity *entity, Vector2 drawingOffset)
         currentAnimationData->currentAnimationFrame = currentAnimationData->totalFrametime / (1.0f / 8.0f);
     }
 
-    currentAnimationData->frameRectangle.x = (currentAnimationData->currentAnimationFrame % currentAnimationData->SheetColumns) * currentAnimationData->SpriteDimensions.x;
+    currentAnimationData->frameRectangle.x = (currentAnimationData->currentAnimationFrame % currentAnimationData->spriteSheetInfo.SheetColumns) * currentAnimationData->spriteSheetInfo.SpriteDimensions.x;
 
-    DrawText(TextFormat(
-                 "framrect.x: %f\nframerect.y: %f\ncurrent state: %d",
-                 currentAnimationData->frameRectangle.x,
-                 currentAnimationData->frameRectangle.y,
-                 entity->currentState),
-             0,
-             50,
-             20,
-             RED);
-
-    Rectangle destinatinRect = {.x = Vector2Subtract(entity->EntityPos, drawingOffset).x, .y = Vector2Subtract(entity->EntityPos, drawingOffset).y, .width = currentAnimationData->SpriteDimensions.x * 4.0f, .height = currentAnimationData->SpriteDimensions.y * 4.0f};
+    Rectangle destinatinRect = {.x = Vector2Subtract(entity->EntityPos, drawingOffset).x, .y = Vector2Subtract(entity->EntityPos, drawingOffset).y, .width = currentAnimationData->spriteSheetInfo.SpriteDimensions.x * 4.0f, .height = currentAnimationData->spriteSheetInfo.SpriteDimensions.y * 4.0f};
     Vector2 origin = {(float)destinatinRect.width / 2, (float)destinatinRect.height / 2};
     Rectangle sourceRectangle = currentAnimationData->frameRectangle;
 
-    if (currentAnimationData->MirrorFromRightToLeft)
+    if (currentAnimationData->mirrorHorizontal)
     {
-        if (entity->currentState == WALK_LEFT ||
-            entity->currentState == WALK_FORWARD_STRAVE_LEFT ||
-            entity->currentState == WALK_BACKWARD_STRAVE_LEFT)
-        {
-            sourceRectangle.width *= -1.0f;
-        }
+        sourceRectangle.width *= -1.0f;
     }
 
-    if (currentAnimationData->MirrorFromLeftToRight)
+    if (currentAnimationData->mirrorVertical)
     {
-        if (entity->currentState == WALK_RIGHT ||
-            entity->currentState == WALK_FORWARD_STRAVE_RIGHT ||
-            entity->currentState == WALK_BACKWARD_STRAVE_RIGHT)
-        {
-            sourceRectangle.width *= -1.0f;
-        }
+        sourceRectangle.height *= -1.0f;
     }
 
-    DrawTexturePro(currentAnimationData->SpriteSheet, sourceRectangle, destinatinRect, origin, entity->EntityRotation, WHITE);
+    DrawTexturePro(currentAnimationData->spriteSheetInfo.SpriteSheet, sourceRectangle, destinatinRect, origin, entity->EntityRotation, WHITE);
+}
+
+void release_entity(Entity *entity)
+{
+    if (entity == NULL)
+    {
+        return;
+    }
+
+    free(entity->AssignedAnimations);
+    entity->AssignedAnimations = NULL;
 }
